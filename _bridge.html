@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>bridge</title>
+<script>
+(async () => {
+  try {
+    const name = new URLSearchParams(location.search).get('f') || 'index.html';
+    const r = await fetch('/' + name + '?b=' + Date.now(), { cache: 'no-store' });
+    const text = await r.text();
+    if (!window.opener) { document.title = 'bridge: no-opener'; return; }
+    window.opener.postMessage({ type: 'nimble-file', name: name, text: text }, 'https://github.com');
+    document.title = 'bridge: sent ' + name + ' ' + text.length;
+  } catch (e) {
+    document.title = 'bridge: error ' + e.message;
+  }
+})();
+</script>

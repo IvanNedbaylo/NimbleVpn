@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimbleVPN — быстрый VPN за один клик</title>
+<meta name="description" content="nimbleVPN — быстрые серверы VLESS по всему миру. Нажмите «Подключиться» — конфигурация автоматически добавится в Happ или Incy.">
+<meta name="theme-color" content="#04070e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6l20 8v16c0 13-9 22-20 27C21 52 12 43 12 30V14z' fill='%232f7bff'/%3E%3Crect x='24' y='29' width='16' height='13' rx='3' fill='%23050b18'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#04070e;
+    --bg-2:#070d1a;
+    --card:rgba(13,24,44,.62);
+    --card-2:rgba(9,17,32,.8);
+    --line:rgba(108,163,255,.14);
+    --line-strong:rgba(108,163,255,.32);
+    --txt:#e9f1ff;
+    --muted:#8ea3c6;
+    --blue:#2f7bff;
+    --blue-2:#5fd0ff;
+    --green:#4ade9a;
+    --radius:20px;
+    --shadow:0 30px 80px -30px rgba(0,0,0,.9);
+    --font:'Inter','SF Pro Display','Segoe UI',system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,'Cascadia Code','SFMono-Regular',Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:90px}
+  body{
+    margin:0;background:var(--bg);color:var(--txt);font-family:var(--font);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    overflow-x:hidden;line-height:1.55;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(900px 620px at 80% -12%, rgba(38,105,255,.24), transparent 62%),
+      radial-gradient(760px 520px at 4% 8%, rgba(22,64,190,.20), transparent 60%),
+      radial-gradient(1100px 760px at 50% 112%, rgba(18,78,220,.14), transparent 62%);
+  }
+  .grid-bg{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(120,170,255,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(120,170,255,.05) 1px,transparent 1px);
+    background-size:64px 64px;
+    -webkit-mask-image:radial-gradient(circle at 50% 15%,#000 0%,transparent 72%);
+    mask-image:radial-gradient(circle at 50% 15%,#000 0%,transparent 72%);
+  }
+  .sprite{position:absolute;width:0;height:0;overflow:hidden}
+  img,svg{display:block}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit}
+  ::selection{background:rgba(47,123,255,.4)}
+
+  .container{width:min(1160px,92vw);margin:0 auto;position:relative;z-index:1}
+
+  /* ---------- рекламный баннер ---------- */
+  .promo{
+    position:relative;z-index:61;display:flex;align-items:center;gap:16px 20px;flex-wrap:wrap;
+    padding:11px clamp(14px,4vw,28px);color:#eaf4ff;
+    background:
+      radial-gradient(680px 170px at 10% 0%, rgba(140,90,255,.32), transparent 72%),
+      linear-gradient(90deg, rgba(96,62,255,.22), rgba(47,123,255,.15) 55%, rgba(0,229,255,.10));
+    border-bottom:1px solid rgba(142,120,255,.3);
+    overflow:hidden;
+  }
+  .promo::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 48%,transparent 62%);
+    background-size:240% 100%;animation:promoSweep 8s linear infinite;
+  }
+  @keyframes promoSweep{from{background-position:130% 0}to{background-position:-130% 0}}
+  .promo-text{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 340px;position:relative;z-index:1}
+  .promo-title{display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:700;letter-spacing:-.01em;line-height:1.3}
+  .promo-title b{
+    background:linear-gradient(100deg,#c3b0ff,#7fdcff 60%,#8fe0ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;letter-spacing:.01em;
+  }
+  .promo-sub{font-size:12.5px;line-height:1.45;color:#a3b6d8}
+  .promo-btn{
+    position:relative;z-index:1;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+    padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;
+    color:#fff;background:linear-gradient(135deg,#7b5cff,#2f7bff 70%);
+    border:1px solid rgba(185,166,255,.5);
+    box-shadow:0 10px 26px -12px rgba(123,92,255,.95);
+    transition:transform .18s,box-shadow .18s,filter .18s;
+  }
+  .promo:hover .promo-btn{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 14px 30px -12px rgba(123,92,255,1)}
+  .promo:focus-visible{outline:2px solid #8fb6ff;outline-offset:-3px}
+
+  /* ---------- header ---------- */
+  .site-header{
+    position:sticky;top:0;z-index:60;
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    background:rgba(4,8,16,.55);
+    border-bottom:1px solid transparent;
+    transition:background .3s,border-color .3s;
+  }
+  .site-header.scrolled{background:rgba(4,8,16,.85);border-bottom-color:var(--line)}
+  .header-inner{display:flex;align-items:center;gap:28px;height:74px}
+  .brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .brand-mark{width:38px;height:38px;filter:drop-shadow(0 4px 16px rgba(47,123,255,.55))}
+  .brand-text{font-size:21px;font-weight:800;letter-spacing:-.03em;line-height:1;display:flex;align-items:baseline}
+  .brand-text .nimble{color:#eaf3ff}
+  .brand-text .vpn{background:linear-gradient(120deg,#8fe0ff,#3d8bff 60%,#1c6bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .nav{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .nav a{
+    padding:9px 14px;border-radius:11px;font-size:14px;font-weight:500;color:#b9c8e2;
+    transition:.2s;
+  }
+  .nav a:hover{color:#fff;background:rgba(120,170,255,.09)}
+  .header-cta{display:flex;align-items:center;gap:10px}
+  .menu-btn{
+    display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.03);align-items:center;justify-content:center;cursor:pointer;
+  }
+  .menu-btn span{display:block;width:18px;height:2px;background:#cfe0ff;border-radius:2px;position:relative}
+  .menu-btn span::before,.menu-btn span::after{content:"";position:absolute;left:0;width:18px;height:2px;background:#cfe0ff;border-radius:2px}
+  .menu-btn span::before{top:-6px}.menu-btn span::after{top:6px}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    border:none;border-radius:14px;cursor:pointer;font-weight:700;letter-spacing:-.01em;
+    transition:transform .18s ease,box-shadow .25s ease,background .25s ease,border-color .25s;
+    white-space:nowrap;text-align:center;
+  }
+  .btn:active{transform:translateY(1px) scale(.995)}
+  .btn-primary{
+    position:relative;overflow:hidden;color:#fff;
+    background:linear-gradient(135deg,#1f63ff 0%,#2f86ff 45%,#59c4ff 100%);
+    box-shadow:0 16px 42px -14px rgba(47,123,255,.95),inset 0 1px 0 rgba(255,255,255,.34);
+  }
+  .btn-primary::after{
+    content:"";position:absolute;top:-60%;left:-30%;width:40%;height:220%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+    transform:rotate(18deg);transition:left .6s ease;
+  }
+  .btn-primary:hover::after{left:120%}
+  .btn-primary:hover{box-shadow:0 22px 54px -14px rgba(60,145,255,1),inset 0 1px 0 rgba(255,255,255,.4);transform:translateY(-2px)}
+  .btn-soft{
+    background:rgba(120,170,255,.09);border:1px solid var(--line);color:#dbe9ff;
+  }
+  .btn-soft:hover{background:rgba(120,170,255,.16);border-color:var(--line-strong);transform:translateY(-2px)}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:#c8d8f5}
+  .btn-ghost:hover{border-color:var(--line-strong);background:rgba(120,170,255,.07)}
+  .btn-sm{padding:10px 16px;font-size:14px;border-radius:11px}
+  .btn-lg{padding:21px 38px;font-size:18px;border-radius:18px}
+  .btn-huge{padding:24px 46px;font-size:20px;border-radius:20px}
+  .ico{width:18px;height:18px;flex-shrink:0;fill:currentColor}
+  .ico-stroke{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- hero ---------- */
+  .hero{display:grid;grid-template-columns:1.06fr .94fr;align-items:center;gap:48px;padding:64px 0 40px}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 9px;border-radius:999px;
+    border:1px solid rgba(108,163,255,.28);background:rgba(47,123,255,.09);
+    font-size:13px;font-weight:600;color:#bcd6ff;letter-spacing:.01em;
+  }
+  .badge .dot{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(95,208,255,.16);color:#8fe0ff}
+  .hero h1{
+    margin:22px 0 18px;font-size:clamp(38px,5.4vw,68px);line-height:1.02;
+    letter-spacing:-.035em;font-weight:800;
+  }
+  .grad{
+    background:linear-gradient(110deg,#a6e9ff 0%,#4da2ff 42%,#1b6bff 78%,#4da2ff 100%);
+    background-size:200% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:hue 9s linear infinite;
+  }
+  @keyframes hue{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+  .hero-sub{max-width:520px;margin:0 0 30px;color:var(--muted);font-size:17px;line-height:1.65}
+  .hero-sub b{color:#dbe9ff;font-weight:600}
+  .connect-wrap{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .connect-hint{display:flex;align-items:center;gap:7px;margin-top:12px;font-size:13px;color:#7f95b8}
+  .connect-hint svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:22px;margin-top:34px;padding-top:26px;border-top:1px solid var(--line)}
+  .hero-meta div{display:flex;flex-direction:column;gap:2px}
+  .hero-meta b{font-size:19px;letter-spacing:-.02em}
+  .hero-meta span{font-size:12px;color:#7f95b8;text-transform:uppercase;letter-spacing:.09em}
+
+  .emblem-stage{position:relative;display:grid;place-items:center;min-height:430px}
+  .emblem-halo{
+    position:absolute;width:min(430px,86%);aspect-ratio:1;border-radius:50%;
+    background:radial-gradient(circle,rgba(47,123,255,.32),rgba(47,123,255,.08) 45%,transparent 68%);
+    filter:blur(14px);animation:breathe 6s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{transform:scale(.94);opacity:.8}50%{transform:scale(1.06);opacity:1}}
+  .emblem{
+    position:relative;width:min(360px,78%);height:auto;
+    filter:drop-shadow(0 30px 60px rgba(20,70,200,.55));
+    animation:float 7s ease-in-out infinite;
+  }
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .chip-float{
+    position:absolute;display:flex;align-items:center;gap:9px;
+    padding:10px 14px;border-radius:14px;font-size:12.5px;font-weight:600;
+    background:rgba(10,20,38,.78);border:1px solid rgba(108,163,255,.24);
+    backdrop-filter:blur(10px);box-shadow:0 12px 30px -16px #000;
+    animation:float 8s ease-in-out infinite;
+  }
+  .chip-float i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+  .chip-1{top:12%;left:0;animation-delay:-2s}
+  .chip-2{bottom:14%;right:0;animation-delay:-4s}
+  .chip-3{top:6%;right:4%;animation-delay:-1s}
+  .chip-float span{color:#dbe9ff}
+
+  /* ---------- trust strip ---------- */
+  .trust{
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 26px;
+    padding:20px 26px;border-radius:18px;
+    background:linear-gradient(180deg,rgba(15,27,50,.55),rgba(8,15,29,.55));
+    border:1px solid var(--line);color:#9db2d4;font-size:13.5px;font-weight:500;
+  }
+  .trust span{display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .trust svg{width:15px;height:15px;stroke:#5fd0ff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- sections ---------- */
+  .section{padding:84px 0 0}
+  .sec-head{max-width:680px;margin-bottom:38px}
+  .kicker{
+    display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;color:#5fa8ff;margin-bottom:14px;
+  }
+  .kicker::before{content:"";width:22px;height:1px;background:linear-gradient(90deg,#5fa8ff,transparent)}
+  h2{margin:0 0 12px;font-size:clamp(28px,3.6vw,42px);line-height:1.1;letter-spacing:-.03em;font-weight:800}
+  .sec-head p{margin:0;color:var(--muted);font-size:16px;line-height:1.65}
+
+  /* ---------- servers ---------- */
+  .server-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:14px}
+  .server{
+    position:relative;padding:18px;border-radius:18px;cursor:pointer;
+    background:linear-gradient(180deg,rgba(17,30,56,.72),rgba(7,14,28,.8));
+    border:1px solid var(--line);transition:transform .22s ease,box-shadow .25s,border-color .25s,background .25s;
+    overflow:hidden;
+  }
+  .server::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:radial-gradient(340px 160px at 15% -20%,rgba(70,150,255,.18),transparent 70%);
+    opacity:0;transition:opacity .25s;
+  }
+  .server:hover{transform:translateY(-3px);border-color:rgba(108,163,255,.36);box-shadow:0 22px 46px -26px rgba(47,123,255,.9)}
+  .server:hover::before{opacity:1}
+  .server.active{
+    border-color:rgba(95,208,255,.6);
+    background:linear-gradient(180deg,rgba(26,56,110,.65),rgba(8,18,36,.85));
+    box-shadow:0 0 0 1px rgba(95,208,255,.22),0 24px 54px -26px rgba(47,123,255,.95);
+  }
+  .server.active::after{
+    content:"";position:absolute;top:14px;right:14px;width:7px;height:7px;border-radius:50%;
+    background:var(--green);box-shadow:0 0 12px var(--green);
+  }
+  .server-top{display:flex;align-items:center;gap:10px;min-height:30px}
+  .flag{font-size:22px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+  .server-name{font-weight:700;letter-spacing:-.01em;font-size:15.5px}
+  .ping{
+    margin-left:auto;margin-right:14px;font-size:11px;font-weight:700;color:#7ff0b8;
+    background:rgba(74,222,154,.1);border:1px solid rgba(74,222,154,.22);
+    padding:3px 8px;border-radius:8px;white-space:nowrap;
+  }
+  .server-meta{margin:8px 0 16px;font-size:12.5px;color:#8298ba;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .server-meta .sep{opacity:.4}
+  .proto{font-family:var(--mono);font-size:11px;color:#7fb4ff;background:rgba(70,140,255,.1);border:1px solid rgba(70,140,255,.18);padding:1px 6px;border-radius:6px}
+  .server-actions{display:flex;align-items:center;gap:8px}
+  .server-connect{
+    flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:10px 12px;border-radius:11px;font-size:13.5px;font-weight:700;cursor:pointer;
+    color:#dcebff;background:rgba(120,170,255,.09);border:1px solid var(--line);
+    transition:.2s;white-space:nowrap;
+  }
+  .server-connect:hover{background:rgba(60,130,255,.22);border-color:rgba(108,163,255,.45);color:#fff}
+  .copy-btn{
+    width:38px;height:38px;display:grid;place-items:center;border-radius:11px;cursor:pointer;
+    background:transparent;border:1px solid var(--line);color:#9db2d4;transition:.2s;flex-shrink:0;
+  }
+  .copy-btn:hover{color:#fff;border-color:var(--line-strong);background:rgba(120,170,255,.08)}
+  .servers-foot{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:22px}
+  .servers-foot .note{font-size:13px;color:#7f95b8}
+
+  /* ---------- steps / how ---------- */
+  .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .how-card{
+    position:relative;padding:26px 24px;border-radius:var(--radius);
+    background:linear-gradient(180deg,rgba(15,27,50,.6),rgba(7,14,28,.7));
+    border:1px solid var(--line);overflow:hidden;
+  }
+  .how-card::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(300px 180px at 90% 0%,rgba(70,150,255,.14),transparent 70%);
+  }
+  .how-num{
+    width:44px;height:44px;border-radius:13px;display:grid;place-items:center;margin-bottom:18px;
+    font-weight:800;font-size:16px;color:#cfe6ff;
+    background:linear-gradient(140deg,rgba(47,123,255,.3),rgba(47,123,255,.06));
+    border:1px solid rgba(108,163,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .how-card h3{margin:0 0 8px;font-size:17.5px;letter-spacing:-.015em}
+  .how-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+
+  /* ---------- platform tabs ---------- */
+  .tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:22px;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{
+    display:inline-flex;align-items:center;gap:9px;padding:11px 16px;border-radius:12px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);color:#a9bcdd;
+    font-size:14px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;flex-shrink:0;
+  }
+  .tab svg{width:17px;height:17px;fill:currentColor;opacity:.85}
+  .tab:hover{color:#e6f0ff;border-color:var(--line-strong);background:rgba(120,170,255,.07)}
+  .tab.active{
+    color:#fff;border-color:rgba(108,163,255,.5);
+    background:linear-gradient(140deg,rgba(47,123,255,.32),rgba(47,123,255,.1));
+    box-shadow:0 10px 26px -16px rgba(47,123,255,.9);
+  }
+  .panel{display:none}
+  .panel.active{display:block;animation:fadeUp .35s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .plat-wrap{
+    display:grid;grid-template-columns:1.55fr .8fr;gap:26px;padding:30px;
+    background:linear-gradient(180deg,rgba(14,26,48,.62),rgba(6,12,24,.72));
+    border:1px solid var(--line);border-radius:var(--radius);
+  }
+  .plat-wrap h3{margin:0 0 6px;font-size:21px;letter-spacing:-.02em}
+  .plat-intro{margin:0 0 22px;color:var(--muted);font-size:14.5px}
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px}
+  .steps li{display:flex;gap:14px;align-items:flex-start}
+  .step-n{
+    flex-shrink:0;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;
+    font-size:13px;font-weight:800;color:#bfe0ff;margin-top:1px;
+    background:linear-gradient(150deg,rgba(47,123,255,.28),rgba(47,123,255,.05));
+    border:1px solid rgba(108,163,255,.28);
+  }
+  .steps b{display:block;font-size:14.5px;margin-bottom:2px}
+  .steps p{margin:0;font-size:13.5px;color:#8ea3c6;line-height:1.55}
+  .steps code{
+    font-family:var(--mono);font-size:12px;color:#a9d4ff;background:rgba(70,140,255,.12);
+    padding:2px 6px;border-radius:6px;border:1px solid rgba(70,140,255,.16);
+  }
+  .plat-aside{
+    padding:22px;border-radius:16px;align-self:start;
+    background:linear-gradient(180deg,rgba(20,40,78,.6),rgba(8,16,32,.75));
+    border:1px solid rgba(108,163,255,.2);
+  }
+  .aside-icon{
+    width:48px;height:48px;border-radius:14px;display:grid;place-items:center;margin-bottom:14px;
+    background:linear-gradient(145deg,rgba(47,123,255,.35),rgba(47,123,255,.08));
+    border:1px solid rgba(108,163,255,.3);color:#9fd4ff;
+  }
+  .aside-icon svg{width:24px;height:24px}
+  .plat-aside h4{margin:0 0 6px;font-size:16px;letter-spacing:-.01em}
+  .plat-aside p{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.55}
+  .plat-aside .btn{width:100%;margin-bottom:8px;padding:12px;font-size:14px}
+  .plat-aside .hint{font-size:11.5px;color:#6f84a6;margin:6px 0 0;text-align:center}
+
+  /* ---------- manual configs ---------- */
+  .manual{
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    background:linear-gradient(180deg,rgba(14,26,48,.5),rgba(6,12,24,.6));
+  }
+  .manual summary{
+    list-style:none;display:flex;align-items:center;gap:12px;padding:22px 24px;cursor:pointer;
+    font-weight:700;font-size:15.5px;transition:.2s;
+  }
+  .manual summary::-webkit-details-marker{display:none}
+  .manual summary:hover{background:rgba(120,170,255,.05)}
+  .manual summary .chev{width:18px;height:18px;stroke:#8ea3c6;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s;margin-left:auto;flex-shrink:0}
+  .manual[open] summary .chev{transform:rotate(180deg)}
+  .manual-body{padding:0 24px 24px}
+  .manual-body p{margin:0 0 16px;font-size:13.5px;color:var(--muted)}
+  .sub-link{
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;
+    padding:15px 16px;margin-bottom:18px;border-radius:14px;
+    background:linear-gradient(140deg,rgba(47,123,255,.17),rgba(47,123,255,.05));
+    border:1px solid rgba(108,163,255,.32);
+  }
+  .sub-link-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+  .sub-link-main b{font-size:13.5px}
+  .sub-link-main code{
+    font-family:var(--mono);font-size:11.5px;color:#9cc4ff;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(560px,68vw);
+  }
+  .sub-limit{
+    display:inline-flex;align-items:center;gap:6px;align-self:flex-start;margin-top:6px;
+    padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;
+    color:#9fd0ff;background:rgba(80,160,255,.14);border:1px solid rgba(108,163,255,.3);
+  }
+  .sub-limit svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+  .sub-link-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .cfg-list{display:flex;flex-direction:column;gap:8px}
+  .cfg{
+    display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;
+    background:rgba(255,255,255,.025);border:1px solid var(--line);
+  }
+  .cfg .cfg-name{font-size:13.5px;font-weight:600;min-width:120px;display:flex;align-items:center;gap:8px}
+  .cfg code{
+    font-family:var(--mono);font-size:11.5px;color:#88a4cc;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;flex:1;min-width:0;
+  }
+  .cfg .copy-btn{width:34px;height:34px;border-radius:9px}
+
+  /* ---------- faq ---------- */
+  .faq{display:flex;flex-direction:column;gap:10px;max-width:840px}
+  .faq details{
+    border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden;
+    transition:border-color .25s,background .25s;
+  }
+  .faq details[open]{border-color:rgba(108,163,255,.3);background:rgba(16,30,56,.6)}
+  .faq summary{
+    list-style:none;display:flex;align-items:center;gap:14px;padding:18px 20px;cursor:pointer;
+    font-weight:600;font-size:15px;
+  }
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{
+    content:"+";margin-left:auto;font-size:22px;font-weight:300;line-height:1;color:#6f9cff;
+    transition:transform .25s;flex-shrink:0;
+  }
+  .faq details[open] summary::after{transform:rotate(45deg)}
+  .faq .answer{padding:0 20px 20px;color:var(--muted);font-size:14px;line-height:1.65;max-width:720px}
+  .faq .answer a{color:#7fb9ff;text-decoration:underline;text-underline-offset:3px}
+
+  /* ---------- cta band ---------- */
+  .cta-band{
+    position:relative;overflow:hidden;text-align:center;padding:56px 30px;border-radius:26px;
+    background:linear-gradient(160deg,rgba(28,74,160,.5),rgba(8,16,32,.85) 60%);
+    border:1px solid rgba(108,163,255,.28);box-shadow:var(--shadow);
+  }
+  .cta-band::before{
+    content:"";position:absolute;width:600px;height:600px;border-radius:50%;top:-380px;left:50%;transform:translateX(-50%);
+    background:radial-gradient(circle,rgba(70,160,255,.35),transparent 65%);pointer-events:none;
+  }
+  .cta-band h2{position:relative;margin-bottom:12px}
+  .cta-band p{position:relative;margin:0 auto 28px;max-width:480px;color:#a9bcdd;font-size:15.5px}
+  .cta-band .btn{position:relative}
+
+  /* ---------- footer ---------- */
+  .site-footer{margin-top:84px;border-top:1px solid var(--line);padding:36px 0 44px;position:relative;z-index:1}
+  .footer-inner{display:flex;flex-wrap:wrap;align-items:center;gap:20px;justify-content:space-between}
+  .footer-brand{display:flex;align-items:center;gap:10px;opacity:.9}
+  .footer-brand .brand-mark{width:30px;height:30px}
+  .footer-brand b{font-size:16px;letter-spacing:-.02em}
+  .footer-links{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:#8ea3c6}
+  .footer-links a:hover{color:#cfe4ff}
+  .footer-note{width:100%;font-size:12px;color:#5f7395;line-height:1.6;margin-top:8px}
+
+  /* ---------- legal links ---------- */
+  .legal-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+    width: 100%;
+  }
+  .legal-links a {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line);
+    font-size: 13px;
+    color: #8ea3c6;
+    transition: 0.2s;
+    white-space: nowrap;
+  }
+  .legal-links a:hover {
+    color: #fff;
+    background: rgba(120, 170, 255, 0.09);
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+  }
+
+  /* ---------- modal ---------- */
+  .modal{position:fixed;inset:0;z-index:200;display:none;place-items:center;padding:20px}
+  .modal.open{display:grid}
+  .modal-backdrop{position:absolute;inset:0;background:rgba(2,6,14,.72);backdrop-filter:blur(8px);animation:fade .25s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal-card{
+    position:relative;width:min(540px,100%);max-height:90vh;overflow:auto;
+    padding:30px;border-radius:22px;
+    background:linear-gradient(180deg,#0e1a33,#070e1c);
+    border:1px solid rgba(108,163,255,.26);box-shadow:0 50px 130px -20px #000;
+    animation:pop .28s cubic-bezier(.2,.9,.3,1.1);
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .modal-x{
+    position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:10px;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid var(--line);color:#a9bcdd;font-size:18px;line-height:1;
+  }
+  .modal-x:hover{background:rgba(255,255,255,.08);color:#fff}
+  .modal-ico{
+    width:54px;height:54px;border-radius:16px;display:grid;place-items:center;margin-bottom:18px;
+    background:linear-gradient(145deg,rgba(47,123,255,.35),rgba(47,123,255,.08));
+    border:1px solid rgba(108,163,255,.3);color:#9fd4ff;
+  }
+  .modal-ico svg{width:26px;height:26px}
+  .modal-card h3{margin:0 0 8px;font-size:22px;letter-spacing:-.02em}
+  .modal-card > p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
+  .modal-steps{margin:0 0 22px;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+  .modal-steps li{display:flex;gap:12px;font-size:13.5px;color:#b6c8e6;line-height:1.5}
+  .modal-steps span{
+    flex-shrink:0;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;
+    font-size:12px;font-weight:800;color:#bfe0ff;background:rgba(47,123,255,.18);border:1px solid rgba(108,163,255,.25);
+  }
+  .modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top: 10px;}
+  .modal-actions .btn{flex:1;min-width:120px;padding:16px 18px;font-size:15px; justify-content: center;}
+  .modal .hint{margin:16px 0 0;font-size:12px;color:#6f84a6;text-align:center}
+  body.modal-open{overflow:hidden}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);z-index:300;
+    padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;color:#eaf4ff;
+    background:rgba(16,32,60,.95);border:1px solid rgba(108,163,255,.35);
+    box-shadow:0 18px 44px -18px #000;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;max-width:90vw;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast .ok{color:#7ff0b8;margin-right:8px}
+
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity .7s cubic-bezier(.2,.8,.3,1),transform .7s cubic-bezier(.2,.8,.3,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:980px){
+    .hero{grid-template-columns:minmax(0,1fr);gap:26px;padding-top:44px}
+    .hero>*{min-width:0;max-width:100%}
+    .emblem-stage{order:-1;min-height:340px;margin-top:-10px;max-width:100%;overflow:hidden}
+    .emblem{width:min(290px,70%)}
+    .chip-1{top:6%;left:0}.chip-2{bottom:6%;right:0}.chip-3{display:none}
+    .hero-sub{margin-bottom:26px}
+    .plat-wrap{grid-template-columns:1fr;gap:24px;padding:24px}
+    .how-grid{grid-template-columns:1fr}
+    .nav{
+      display:none;position:absolute;top:74px;left:4vw;right:4vw;flex-direction:column;align-items:stretch;
+      background:rgba(7,13,26,.98);border:1px solid var(--line);border-radius:16px;padding:10px;
+      box-shadow:0 30px 60px -20px #000;
+    }
+    .nav.open{display:flex}
+    .nav a{padding:12px 14px;font-size:15px}
+    .menu-btn{display:flex}
+    .header-cta .btn{display:none}
+  }
+  @media (max-width:620px){
+    .section{padding-top:62px}
+    .hero{padding-top:34px;padding-bottom:30px}
+    .hero h1{font-size:clamp(32px,9.4vw,42px);margin:16px 0 14px}
+    .hero-sub{font-size:15.5px;line-height:1.6;margin-bottom:22px}
+    .hero-meta{gap:18px;margin-top:26px;padding-top:20px}
+    .btn-huge{width:100%;padding:18px 20px;font-size:17px}
+    .connect-wrap{flex-direction:column;align-items:stretch}
+    .connect-wrap .btn-soft{width:100%}
+    .server-grid{grid-template-columns:1fr}
+    .cfg .cfg-name{min-width:96px;font-size:12.5px}
+    .cfg code{display:none}
+    .cta-band{padding:40px 18px}
+    .footer-inner{justify-content:flex-start}
+    .modal-card{padding:24px}
+    .modal-actions .btn { min-width: 100%; }
+    .trust{padding:16px 18px;gap:10px 18px;font-size:12.5px}
+    .trust span{white-space:normal}
+    .tabs{margin-left:-2px;margin-right:-2px;padding-left:2px;padding-right:2px;-webkit-overflow-scrolling:touch}
+    .tab{flex:0 0 auto;font-size:13px;padding:10px 14px}
+    .sub-link{flex-direction:column;align-items:stretch}
+    .sub-link-actions{width:100%}
+    .sub-link-actions .btn{flex:1;justify-content:center}
+    .sec-head{margin-bottom:26px}
+    .chip-float{font-size:11.5px;padding:8px 11px}
+    .promo{gap:10px;padding:12px 14px}
+    .promo-text{flex:1 1 100%}
+    .promo-title{font-size:13.5px}
+    .promo-sub{font-size:12px}
+    .promo-btn{width:100%;padding:11px 16px;font-size:13px}
+  }
+  @media (max-width:380px){
+    .hero h1{font-size:30px}
+    .hero-meta b{font-size:17px}
+    .chip-2{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= ICON SPRITE ================= -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="emblem" viewBox="0 0 240 240">
+    <defs>
+      <linearGradient id="shieldGrad" x1="58" y1="52" x2="186" y2="196" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#b7ecff"/>
+        <stop offset=".38" stop-color="#4f9dff"/>
+        <stop offset=".76" stop-color="#1f63e6"/>
+        <stop offset="1" stop-color="#0a3aa8"/>
+      </linearGradient>
+      <linearGradient id="orbitGrad" x1="30" y1="164" x2="214" y2="132" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#1d5cff" stop-opacity="0"/>
+        <stop offset=".45" stop-color="#7fdcff"/>
+        <stop offset=".7" stop-color="#2f7bff"/>
+        <stop offset="1" stop-color="#1d5cff" stop-opacity="0"/>
+      </linearGradient>
+      <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#2f7bff" stop-opacity=".55"/>
+        <stop offset="1" stop-color="#2f7bff" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="5"/>
+      </filter>
+    </defs>
+
+    <circle cx="120" cy="120" r="106" fill="url(#coreGlow)"/>
+
+    <g stroke="#4f9dff" fill="none" stroke-width="1.1" opacity=".26">
+      <circle cx="120" cy="120" r="96"/>
+      <circle cx="120" cy="120" r="74"/>
+      <ellipse cx="120" cy="120" rx="96" ry="34"/>
+      <ellipse cx="120" cy="120" rx="96" ry="62"/>
+      <ellipse cx="120" cy="120" rx="34" ry="96"/>
+      <ellipse cx="120" cy="120" rx="62" ry="96"/>
+      <path d="M24 120h192"/>
+    </g>
+
+    <path d="M34 156c22 34 74 52 122 40 33-8 56-26 66-46" stroke="url(#orbitGrad)" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <path d="M52 78c16-24 48-38 84-34" stroke="#6ec8ff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".55"/>
+
+    <path d="M120 46l58 24v52c0 38-24 64-58 78-34-14-58-40-58-78V70z" fill="#2f7bff" opacity=".3" filter="url(#softGlow)"/>
+    <path d="M120 48l56 23v51c0 37-23 62-56 75-33-13-56-38-56-75V71z"
+          fill="rgba(12,32,72,.55)" stroke="url(#shieldGrad)" stroke-width="3.4" stroke-linejoin="round"/>
+    <path d="M120 58l46 19v45c0 31-19 53-46 64-27-11-46-33-46-64V77z" fill="none" stroke="url(#shieldGrad)" stroke-width="1.1" opacity=".5"/>
+
+    <path d="M104 112v-12a16 16 0 0132 0v12" fill="none" stroke="#bfeaff" stroke-width="6" stroke-linecap="round"/>
+    <rect x="98" y="110" width="44" height="34" rx="8" fill="url(#shieldGrad)" stroke="#d8f4ff" stroke-width="1.2"/>
+    <circle cx="120" cy="124" r="4.4" fill="#06152f"/>
+    <rect x="118.4" y="126" width="3.2" height="9" rx="1.6" fill="#06152f"/>
+
+    <path d="M196 40l3.4 9.6 9.6 3.4-9.6 3.4L196 66l-3.4-9.6-9.6-3.4 9.6-3.4z" fill="#8fe0ff"/>
+    <path d="M44 92l2.4 6.6 6.6 2.4-6.6 2.4L44 110l-2.4-6.6-6.6-2.4 6.6-2.4z" fill="#5fb6ff" opacity=".8"/>
+    <path d="M182 178l2 5.6 5.6 2-5.6 2-2 5.6-2-5.6-5.6-2 5.6-2z" fill="#5fb6ff" opacity=".7"/>
+  </symbol>
+
+  <symbol id="i-win" viewBox="0 0 24 24">
+    <path d="M3 5.6l8-1.1v7.1H3zM12.6 4.3L21 3v8.6h-8.4zM3 12.4h8v7.1l-8-1.1zM12.6 12.4H21V21l-8.4-1.2z"/>
+  </symbol>
+  <symbol id="i-apple" viewBox="0 0 24 24">
+    <path d="M16.6 12.7c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.4 0-2.8.9-3.5 2.2-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.6 2.6-.6s1.5.6 2.6.6 1.8-1 2.4-2c.8-1.1 1.1-2.2 1.1-2.3-.1 0-2.1-.8-2.1-3.3zM14.3 5.3c.5-.7.9-1.6.8-2.5-.8 0-1.8.5-2.4 1.2-.5.6-.9 1.5-.8 2.4.9.1 1.8-.4 2.4-1.1z"/>
+  </symbol>
+  <symbol id="i-android" viewBox="0 0 24 24">
+    <path d="M6.2 9.3h11.6v8.3c0 .9-.6 1.6-1.4 1.6h-.7v2.1c0 .4-.3.7-.7.7h-.6c-.4 0-.7-.3-.7-.7v-2.1h-3.4v2.1c0 .4-.3.7-.7.7h-.6c-.4 0-.7-.3-.7-.7v-2.1H7.6c-.8 0-1.4-.7-1.4-1.6V9.3zM3.8 9.3c.6 0 1.1.5 1.1 1.2v5.1c0 .7-.5 1.2-1.1 1.2S2.7 16.3 2.7 15.6v-5.1c0-.7.5-1.2 1.1-1.2zm16.4 0c.6 0 1.1.5 1.1 1.2v5.1c0 .7-.5 1.2-1.1 1.2s-1.1-.5-1.1-1.2v-5.1c0-.7.5-1.2 1.1-1.2zM7.7 4.3l-.9-1.6c-.1-.2 0-.3.1-.4.2-.1.3 0 .4.1l.9 1.6c.8-.3 1.6-.5 2.6-.5s1.8.2 2.6.5l.9-1.6c.1-.2.3-.2.4-.1.2.1.2.3.1.4l-.9 1.6c1.4.7 2.3 1.8 2.5 3.1H5.2c.2-1.3 1.1-2.4 2.5-3.1zm1.6 2.2c.4 0 .7-.3.7-.7s-.3-.7-.7-.7-.7.3-.7.7.3.7.7.7zm5.4 0c.4 0 .7-.3.7-.7s-.3-.7-.7-.7-.7.3-.7.7.3.7.7.7z"/>
+  </symbol>
+  <symbol id="i-linux" viewBox="0 0 24 24">
+    <path d="M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zm2.6 4.2l3 2.8-3 2.8M11 15h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24">
+    <path d="M3 5.2h18v11.6H3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M9 20h6M12 16.8V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24">
+    <rect x="6.2" y="2.2" width="11.6" height="19.6" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M10.4 5.4h3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24">
+    <rect x="9" y="9" width="11" height="11" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M15 5.8A2.8 2.8 0 0012.2 3H6.8A2.8 2.8 0 004 5.8v5.4A2.8 2.8 0 006.8 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24">
+    <path d="M4.5 12.5l5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24">
+    <path d="M13 2L4.6 13.4h5.6L9.8 22l8.6-11.7h-5.6z" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24">
+    <path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-power" viewBox="0 0 24 24">
+    <path d="M12 3v8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M6.6 6.6a8 8 0 1010.8 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-download" viewBox="0 0 24 24">
+    <path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24">
+    <path d="M12 3l7 3v5.2c0 4.6-2.9 7.9-7 9.8-4.1-1.9-7-5.2-7-9.8V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<div class="grid-bg" aria-hidden="true"></div>
+
+<!-- ================= РЕКЛАМНЫЙ БАННЕР ================= -->
+<a class="promo" href="https://neuro-ai-gvi8.onrender.com/" target="_blank" rel="noopener sponsored"
+   aria-label="NEURO-AI — генерируй тексты, код и картинки. Попробовать бесплатно">
+  <span class="promo-text">
+    <span class="promo-title">⚡ <b>NEURO-AI</b> — Будущее уже здесь</span>
+    <span class="promo-sub">Генерируй тексты, код и картинки с помощью мощнейших нейросетей в одном месте.</span>
+  </span>
+  <span class="promo-btn">Попробовать бесплатно →</span>
+</a>
+
+<!-- ================= HEADER ================= -->
+<header class="site-header" id="top">
+  <div class="container header-inner">
+    <a class="brand" href="#home" aria-label="nimbleVPN — на главную">
+      <svg class="brand-mark" viewBox="0 0 240 240" aria-hidden="true"><use href="#emblem"/></svg>
+      <span class="brand-text"><span class="nimble">nimble</span><span class="vpn">VPN</span></span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Основная навигация">
+      <a href="#servers">Серверы</a>
+      <a href="#how">Как подключить</a>
+      <a href="#instructions">Инструкции</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="header-cta">
+      <button class="btn btn-primary btn-sm" data-connect>
+        <svg class="ico" aria-hidden="true"><use href="#i-bolt"/></svg>
+        Подключиться
+      </button>
+      <button class="menu-btn" id="menuBtn" aria-label="Меню" aria-expanded="false"><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ================= HERO ================= -->
+<section class="hero container" id="home">
+  <div>
+    <span class="badge">
+      <span class="dot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3l7 3v5.2c0 4.6-2.9 7.9-7 9.8-4.1-1.9-7-5.2-7-9.8V6z"/></svg></span>
+      Работает на протоколе VLESS
+    </span>
+    <h1>Свободный интернет<br><span class="grad">за один клик</span></h1>
+    <p class="hero-sub">
+      <b>nimbleVPN</b> — пять быстрых локаций в одной подписке. Нажмите «Подключиться», выберите приложение <b>Happ</b> или <b>Incy</b> — и все серверы добавятся автоматически.
+    </p>
+
+    <div class="connect-wrap">
+      <button class="btn btn-primary btn-huge" data-connect>
+        <svg class="ico" style="width:22px;height:22px" aria-hidden="true"><use href="#i-bolt"/></svg>
+        Подключиться
+      </button>
+      <a class="btn btn-soft btn-lg" href="#instructions">
+        Инструкция для моей платформы
+        <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </a>
+    </div>
+    <div class="connect-hint">
+      <svg aria-hidden="true"><path d="M12 3v8M6.6 6.6a8 8 0 1010.8 0"/></svg>
+      Добавит все 5 серверов одной подпиской
+      <span style="opacity:.4">·</span>
+      до 3 устройств
+      <span style="opacity:.4">·</span>
+      <a href="#servers" style="color:#7fb9ff;text-decoration:underline;text-underline-offset:3px">или один сервер</a>
+    </div>
+
+    <div class="hero-meta">
+      <div><b>5</b><span>локаций</span></div>
+      <div><b>3</b><span>устройства</span></div>
+      <div><b>VLESS</b><span>XHTTP · TLS</span></div>
+      <div><b>24/7</b><span>доступ</span></div>
+    </div>
+  </div>
+
+  <div class="emblem-stage">
+    <div class="emblem-halo" aria-hidden="true"></div>
+    <svg class="emblem" viewBox="0 0 240 240" role="img" aria-label="Логотип nimbleVPN — щит с замком и глобусом">
+      <use href="#emblem"/>
+    </svg>
+    <div class="chip-float chip-1"><i></i><span>Шифрование TLS 1.3</span></div>
+    <div class="chip-float chip-2"><i></i><span>Германия · ~42 мс</span></div>
+    <div class="chip-float chip-3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8fe0ff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l7 3v5.2c0 4.6-2.9 7.9-7 9.8-4.1-1.9-7-5.2-7-9.8V6z"/></svg><span>Без логов</span></div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="trust">
+    <span><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>Happ & Incy</span>
+    <span><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>VLESS + XTLS-Vision</span>
+    <span><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>XHTTP (stream-one)</span>
+    <span><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>TLS 1.3</span>
+    <span><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>До 3 устройств</span>
+    <span><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>Без регистрации</span>
+  </div>
+</div>
+
+<!-- ================= SERVERS ================= -->
+<section class="section container" id="servers">
+  <div class="sec-head reveal">
+    <span class="kicker">Локации</span>
+    <h2>Все серверы — одной ссылкой</h2>
+    <p>Одна кнопка добавляет подписку со всеми пятью локациями в выбранное приложение. Нужен только один сервер — нажмите «Подключить» на его карточке.</p>
+  </div>
+
+  <div class="server-grid reveal" id="serverGrid"></div>
+
+  <div class="servers-foot reveal">
+    <button class="btn btn-primary btn-sm" data-connect>
+      <svg class="ico" aria-hidden="true"><use href="#i-bolt"/></svg>
+      Все серверы одной ссылкой
+    </button>
+    <button class="btn btn-soft btn-sm" id="downloadAll">
+      <svg class="ico" aria-hidden="true"><use href="#i-download"/></svg>
+      Скачать ссылки
+    </button>
+    <button class="btn btn-ghost btn-sm" id="copyAll">
+      <svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg>
+      Скопировать ссылки
+    </button>
+    <span class="note">«Подключить» на карточке добавляет только эту локацию. Пинг ориентировочный.</span>
+  </div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section class="section container" id="how">
+  <div class="sec-head reveal">
+    <span class="kicker">Как это работает</span>
+    <h2>Три шага до приватности</h2>
+    <p>Никаких аккаунтов и ручного ввода параметров. Всё, что нужно, — установить приложение один раз.</p>
+  </div>
+  <div class="how-grid">
+    <article class="how-card reveal">
+      <div class="how-num">01</div>
+      <h3>Установите приложение</h3>
+      <p>Скачайте <b>Happ</b> или <b>Incy</b> для своей платформы. Оба приложения бесплатные и поддерживают VLESS.</p>
+    </article>
+    <article class="how-card reveal">
+      <div class="how-num">02</div>
+      <h3>Нажмите «Подключиться»</h3>
+      <p>Кнопка на этом сайте предложит выбрать приложение, откроет его и добавит подписку со всеми пятью серверами.</p>
+    </article>
+    <article class="how-card reveal">
+      <div class="how-num">03</div>
+      <h3>Включите туннель</h3>
+      <p>В приложении нажмите большую кнопку питания и разрешите VPN-подключение. Готово — трафик уже шифруется.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ================= INSTRUCTIONS ================= -->
+<section class="section container" id="instructions">
+  <div class="sec-head reveal">
+    <span class="kicker">Инструкции</span>
+    <h2>Для всех платформ</h2>
+    <p>Выберите свою систему. Мы автоматически подсветили ту, с которой вы открыли сайт.</p>
+  </div>
+
+  <div class="tabs reveal" id="tabs" role="tablist" aria-label="Платформы"></div>
+  <div class="reveal" id="panels"></div>
+</section>
+
+<!-- ================= MANUAL CONFIGS ================= -->
+<section class="section container" id="configs">
+  <details class="manual reveal">
+    <summary>
+      <svg class="ico-stroke" style="color:#7fb9ff"><use href="#i-shield"/></svg>
+      Ручное подключение и ссылки на подписки
+      <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="manual-body">
+      <p>Если кнопка не сработала — скопируйте ссылку подписки и добавьте её в приложение вручную: <b>«+» → «Добавить подписку»</b>. Одна подписка содержит все пять серверов. Ссылки ниже добавляют только одну локацию — тоже через <b>«Добавить подписку»</b>.</p>
+
+      <div class="sub-link">
+        <div class="sub-link-main">
+          <b>Ссылка на подписку · все серверы</b>
+          <code id="subUrl">https://nimblevpn-sub.i-a-nedbaylo.workers.dev/sub/…</code>
+          <span class="sub-limit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5.2c0 4.6-2.9 7.9-7 9.8-4.1-1.9-7-5.2-7-9.8V6z"/></svg>
+            Лимит: 3 устройства одновременно
+          </span>
+        </div>
+        <div class="sub-link-actions">
+          <button class="btn btn-primary btn-sm" data-connect>
+            <svg class="ico" aria-hidden="true"><use href="#i-bolt"/></svg>
+            Подключиться
+          </button>
+          <button class="btn btn-soft btn-sm" id="copySub">
+            <svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg>
+            Скопировать
+          </button>
+        </div>
+      </div>
+      <p style="margin:-6px 0 18px;color:#8ea3c6;font-size:13px;line-height:1.5">Ссылка персональная и создаётся один раз для этого браузера. Чтобы подключить телефон и планшет, отправьте им <b>эту же</b> ссылку — тогда все устройства войдут в одну подписку с лимитом 3. Новая ссылка на другом устройстве создаст отдельную подписку.</p>
+
+      <div class="cfg-list" id="cfgList"></div>
+    </div>
+  </details>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section class="section container" id="faq">
+  <div class="sec-head reveal">
+    <span class="kicker">Вопросы</span>
+    <h2>Частые вопросы</h2>
+  </div>
+  <div class="faq reveal">
+    <details>
+      <summary>Кнопка «Подключиться» ничего не открывает. Что делать?</summary>
+      <div class="answer">Скорее всего, приложение не установлено или браузер блокирует переход по схеме <code>happ://</code> или <code>incy://</code>. Установите нужное приложение, затем вернитесь на эту страницу и нажмите кнопку снова. Запасной вариант — скопировать ссылку подписки и вставить её в приложение вручную: «+» → «Добавить подписку».</div>
+    </details>
+    <details>
+      <summary>Пишет «Неверный формат ссылки на подписку»</summary>
+      <div class="answer">Приложение принимает в качестве подписки только обычный <code>https://</code>-адрес, а не <code>vless://</code>. Кнопка на этом сайте передаёт правильную ссылку. Если добавляете вручную — скопируйте адрес из блока «Ручное подключение» целиком, без префикса <code>happ://add/</code> или <code>incy://add/</code>, и вставьте в «+» → «Добавить подписку».</div>
+    </details>
+    <details>
+      <summary>Подписка не загружается в приложении</summary>
+      <div class="answer">Проверьте интернет и попробуйте обновить подписку ещё раз. Если не помогает — откройте ссылку подписки в браузере: сервер должен вернуть текст с <code>vless://</code>-строками. Ошибка 403 означает, что либо исчерпан лимит устройств, либо в приложении выключена отправка HWID — включите «Отправлять HWID» в настройках подписки. Если дело в лимите, обратитесь к администратору nimbleVPN, чтобы удалить старое устройство.</div>
+    </details>
+    <details>
+      <summary>Почему после перехода в приложение нужно нажимать питание?</summary>
+      <div class="answer">Deep-link добавляет конфигурацию в приложение, но iOS и Android требуют явного подтверждения VPN-подключения со стороны пользователя — это системная защита, её нельзя обойти из браузера. Одно нажатие кнопки питания включает туннель.</div>
+    </details>
+    <details>
+      <summary>Happ и Incy бесплатные?</summary>
+      <div class="answer">Да, оба приложения — бесплатные утилиты. Вы платите только за серверы, а в nimbleVPN конфигурации уже включены: дополнительных подписок и аккаунтов не нужно.</div>
+    </details>
+    <details>
+      <summary>Кнопка добавляет все серверы или один?</summary>
+      <div class="answer">Кнопка «Подключиться» на странице добавляет подписку сразу со всеми пятью локациями. Кнопка «Подключить» на карточке сервера добавляет только эту локацию — удобно, если нужен один конкретный сервер.</div>
+    </details>
+    <details>
+      <summary>Какой сервер выбрать?</summary>
+      <div class="answer">Подписка добавляет все серверы сразу — переключаться можно в приложении. Начните с Германии или Нидерландов: они обычно самые быстрые. Для стриминга попробуйте «YouTube», для американских сервисов — США. Если соединение нестабильно, просто выберите другую локацию.</div>
+    </details>
+    <details>
+      <summary>Мой трафик логируется?</summary>
+      <div class="answer">nimbleVPN не требует регистрации и не ведёт историю посещений. Серверы работают на протоколе VLESS с TLS-шифрованием, поэтому провайдер видит только зашифрованный поток до узла.</div>
+    </details>
+    <details>
+      <summary>Сколько устройств можно подключить?</summary>
+      <div class="answer">У каждой подписки <b>своя персональная ссылка</b> и свой лимит: <b>3 устройства одновременно</b> — например, телефон, ноутбук и планшет. Лимит проверяется по HWID устройства и считается отдельно для каждой ссылки. Чтобы подключить второе и третье устройство, отправьте им ссылку из блока «Ручное подключение» — это будет та же подписка. Чтобы подключить четвёртое, попросите администратора nimbleVPN удалить старое устройство в панели управления: простое удаление подписки в приложении слот не освобождает.</div>
+    </details>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="section container">
+  <div class="cta-band reveal">
+    <h2>Одна ссылка — все серверы</h2>
+    <p>Нажмите кнопку — выберите Happ или Incy — подписка со всеми пятью локациями обновится в приложении. Останется включить туннель. Ссылка одна на 3 устройства.</p>
+    <button class="btn btn-primary btn-lg" data-connect>
+      <svg class="ico" style="width:20px;height:20px" aria-hidden="true"><use href="#i-power"/></svg>
+      Подключиться
+    </button>
+  </div>
+</section>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <svg class="brand-mark" viewBox="0 0 240 240" aria-hidden="true"><use href="#emblem"/></svg>
+      <b>nimbleVPN</b>
+    </div>
+    <div class="footer-links">
+      <a href="#servers">Серверы</a>
+      <a href="#instructions">Инструкции</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://www.happ.su/" target="_blank" rel="noopener">Happ ↗</a>
+      <a href="https://github.com/INCY-DEV/incy-platforms" target="_blank" rel="noopener">Incy ↗</a>
+    </div>
+
+    <!-- Юридические ссылки -->
+    <div class="legal-links">
+      <a href="terms.html" target="_blank">Оферта</a>
+      <a href="privacy.html" target="_blank">Конфиденциальность</a>
+      <a href="agreement.html" target="_blank">Соглашение</a>
+    </div>
+
+    <p class="footer-note">
+      © 2026 nimbleVPN. Сервис использует протокол VLESS и клиенты Happ / Incy. Используйте VPN в соответствии с законодательством вашей страны.
+      Одна подписка рассчитана на 3 устройства одновременно. Конфигурации хранятся на защищённом сервере, а не в этом файле.
+    </p>
+  </div>
+</footer>
+
+<!-- ================= MODAL ВЫБОРА ПРИЛОЖЕНИЯ ================= -->
+<div class="modal" id="appModal" role="dialog" aria-modal="true" aria-labelledby="appModalTitle" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-x" data-close aria-label="Закрыть">×</button>
+    <div class="modal-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-shield"/></svg></div>
+    <h3 id="appModalTitle">Выберите приложение</h3>
+    <p>В каком приложении вы хотите настроить VPN?</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" data-app="happ">
+        <svg class="ico" aria-hidden="true"><use href="#i-bolt"/></svg>
+        Happ
+      </button>
+      <button class="btn btn-primary" data-app="incy" style="background: linear-gradient(135deg,#8b5cf6 0%,#a855f7 45%,#d946ef 100%); box-shadow:0 16px 42px -14px rgba(168,85,247,.95),inset 0 1px 0 rgba(255,255,255,.34);">
+        <svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>
+        Incy
+      </button>
+    </div>
+    <p class="hint">Если приложение не установлено, вы перейдёте на страницу загрузки.</p>
+  </div>
+</div>
+
+<!-- ================= MODAL ОШИБКИ (ПРИЛОЖЕНИЕ НЕ ОТКРЫЛОСЬ) ================= -->
+<div class="modal" id="errorModal" role="dialog" aria-modal="true" aria-labelledby="errorModalTitle" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-x" data-close aria-label="Закрыть">×</button>
+    <div class="modal-ico" style="color: #ffb3b3; background: linear-gradient(145deg, rgba(255, 100, 100, 0.35), rgba(255, 100, 100, 0.08)); border-color: rgba(255, 100, 100, 0.3);">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h3 id="errorModalTitle">Приложение не открылось?</h3>
+    <p>Похоже, приложение ещё не установлено или браузер заблокировал переход.</p>
+    <div class="modal-actions">
+      <a class="btn btn-primary" id="downloadLink" href="#" target="_blank" rel="noopener">Скачать</a>
+      <button class="btn btn-soft" data-close>Понятно</button>
+    </div>
+    <p class="hint">Ссылка на подписку уже скопирована в буфер обмена</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const WORKER_BASE = 'https://nimblevpn-sub.i-a-nedbaylo.workers.dev';
+  const WORKER_READY = WORKER_BASE.indexOf('YOUR-SUBDOMAIN') === -1;
+
+  const FALLBACK_SUBS = {
+    all: 'https://dpaste.com/3ATG6UP2T.txt',
+    de: 'https://dpaste.com/FRGXCU2YE.txt',
+    nl: 'https://dpaste.com/DBCPLMPFZ.txt',
+    ru: 'https://dpaste.com/8Q5X2RKGL.txt',
+    us: 'https://dpaste.com/D22V6Y4NY.txt',
+    yt: 'https://dpaste.com/4TUYBJQX8.txt'
+  };
+
+  const TOKEN_KEY = 'nimblevpn_sub_token';
+  const TOKEN_RE = /^[a-f0-9]{32}$/;
+
+  /* Бот выдаёт каждому свой токен: ссылка вида ...?t=<токен> */
+  function tokenFromUrl() {
+    try {
+      const t = (new URLSearchParams(window.location.search).get('t') || '').toLowerCase();
+      return TOKEN_RE.test(t) ? t : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function cleanUrlToken() {
+    try {
+      if (!window.history || !history.replaceState) return;
+      const u = new URL(window.location.href);
+      if (!u.searchParams.has('t')) return;
+      u.searchParams.delete('t');
+      const q = u.searchParams.toString();
+      history.replaceState(null, '', u.pathname + (q ? '?' + q : '') + u.hash);
+    } catch (e) {}
+  }
+
+  function makeToken() {
+    const bytes = new Uint8Array(16);
+    if (window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    let out = '';
+    for (let i = 0; i < bytes.length; i++) out += ('0' + bytes[i].toString(16)).slice(-2);
+    return out;
+  }
+
+  function subToken() {
+    if (!WORKER_READY) return null;
+    const fromUrl = tokenFromUrl();
+    try {
+      if (fromUrl) {
+        localStorage.setItem(TOKEN_KEY, fromUrl);
+        cleanUrlToken();
+        return fromUrl;
+      }
+      let t = localStorage.getItem(TOKEN_KEY);
+      if (!TOKEN_RE.test(t || '')) {
+        t = makeToken();
+        localStorage.setItem(TOKEN_KEY, t);
+      }
+      return t;
+    } catch (e) {
+      return fromUrl || makeToken();
+    }
+  }
+
+  const SUB_TOKEN = subToken();
+
+  function serverSub(id) {
+    return WORKER_READY ? WORKER_BASE + '/sub/' + SUB_TOKEN + '/' + id : FALLBACK_SUBS[id];
+  }
+
+  const SUBSCRIPTION_ALL = WORKER_READY ? WORKER_BASE + '/sub/' + SUB_TOKEN : FALLBACK_SUBS.all;
+
+  const SERVERS = [
+    { id: 'de', name: 'Германия', flag: '🇩🇪', city: 'Франкфурт', proto: 'XHTTP', ping: '~42 мс', tag: 'Популярный', sub: serverSub('de') },
+    { id: 'nl', name: 'Нидерланды', flag: '🇳🇱', city: 'Амстердам', proto: 'XTLS', ping: '~48 мс', tag: '', sub: serverSub('nl') },
+    { id: 'ru', name: 'Россия', flag: '🇷🇺', city: 'Москва', proto: 'XTLS', ping: '~18 мс', tag: '', sub: serverSub('ru') },
+    { id: 'us', name: 'США', flag: '🇺🇸', city: 'Нью-Йорк', proto: 'XHTTP', ping: '~130 мс', tag: '', sub: serverSub('us') },
+    { id: 'yt', name: 'YouTube', flag: '🍿', city: 'Стриминг', proto: 'XTLS', ping: '~35 мс', tag: '', sub: serverSub('yt') }
+  ];
+
+  const PLATFORMS = [
+    { id: 'windows', name: 'Windows', icon: 'i-win', label: 'Windows 10 / 11', title: 'Подключение на Windows', intro: 'Понадобится приложение для Windows и права администратора при первом запуске.', steps: [ { t: 'Установите приложение', d: 'Скачайте установщик с официального сайта happ.su или из GitHub (Incy).' }, { t: 'Вернитесь на эту страницу', d: 'Оставьте вкладку nimbleVPN открытой в браузере — она понадобится для автоматического добавления сервера.' }, { t: 'Нажмите «Подключиться»', d: 'Браузер спросит разрешение на открытие приложения — подтвердите. Подписка со всеми серверами добавится.' }, { t: 'Включите туннель', d: 'В приложении нажмите большую кнопку питания. При первом запуске разрешите установку сетевого драйвера (TUN) в запросе Windows.' } ], asideTitle: 'Приложение для Windows', asideText: 'Поддерживает TUN-режим, автозапуск и системный прокси. Работает на Windows 10 и 11.' },
+    { id: 'macos', name: 'macOS', icon: 'i-apple', label: 'macOS', title: 'Подключение на macOS', intro: 'Можно использовать версию с сайта (DMG) или приложение из App Store.', steps: [ { t: 'Установите приложение', d: 'Скачайте DMG с happ.su или найдите Incy/Happ в GitHub / App Store. Перетащите в папку «Программы».' }, { t: 'Откройте эту страницу', d: 'Вернитесь в Safari или Chrome — вкладка с nimbleVPN должна быть активной.' }, { t: 'Нажмите «Подключиться»', d: 'Подтвердите открытие приложения. Подписка со всеми серверами добавится в список автоматически.' }, { t: 'Разрешите VPN', d: 'macOS запросит добавление VPN-конфигурации — разрешите в «Системных настройках» и нажмите питание.' } ], asideTitle: 'Приложение для macOS', asideText: 'Версия с сайта поддерживает TUN. Версия из App Store использует системный VPN-профиль.' },
+    { id: 'android', name: 'Android', icon: 'i-android', label: 'Android', title: 'Подключение на Android', intro: 'Подходит для смартфонов и планшетов на Android 8 и новее.', steps: [ { t: 'Установите приложение', d: 'Скачайте из Google Play или установите APK с happ.su / GitHub, если Play недоступен.' }, { t: 'Откройте сайт в Chrome', d: 'Нажмите «Подключиться» прямо на этой странице.' }, { t: 'Подтвердите добавление', d: 'Android спросит, открыть ли приложение, — выберите «Открыть». Подписка появится в списке.' }, { t: 'Включите VPN', d: 'Нажмите питание в приложении и разрешите подключение в системном окне. В строке состояния появится значок VPN.' } ], asideTitle: 'Приложение для Android', asideText: 'Поддерживает per-app proxy, автозапуск и работу в фоне. Требуется Android 8.0+.' },
+    { id: 'ios', name: 'iOS', icon: 'i-phone', label: 'iPhone / iPad', title: 'Подключение на iPhone и iPad', intro: 'Deep-link работает только в Safari — в других браузерах iOS может его блокировать.', steps: [ { t: 'Установите приложение', d: 'Откройте App Store и установите Happ Proxy Utility или скачайте Incy с GitHub.' }, { t: 'Откройте сайт в Safari', d: 'Скопируйте адрес этой страницы в Safari, если открыли её в другом браузере.' }, { t: 'Нажмите «Подключиться»', d: 'Появится запрос «Открыть в приложении?» — подтвердите. Подписка со всеми серверами добавится автоматически.' }, { t: 'Разрешите VPN', d: 'В приложении нажмите питание и подтвердите добавление VPN-конфигурации через Face ID или пароль.' } ], asideTitle: 'Приложение для iOS', asideText: 'Работает на iPhone и iPad с iOS 15+. Использует системный Network Extension.' },
+    { id: 'linux', name: 'Linux', icon: 'i-linux', label: 'Linux', title: 'Подключение на Linux', intro: 'Доступен AppImage, который не требует установки зависимостей.', steps: [ { t: 'Скачайте AppImage', d: 'Загрузите сборку для Linux с happ.su или GitHub.' }, { t: 'Сделайте исполняемым', d: 'Выполните <code>chmod +x Happ.AppImage</code> и запустите файл двойным кликом или из терминала.' }, { t: 'Нажмите «Подключиться»', d: 'Нажмите кнопку на этой странице — приложение откроется и добавит все пять серверов.' }, { t: 'Разрешите TUN', d: 'Для TUN-режима приложению нужны права root или настроенная политика. Без TUN используйте системный прокси.' } ], asideTitle: 'Приложение для Linux', asideText: 'AppImage для x86_64. Для TUN-режима требуются права суперпользователя.' },
+    { id: 'tv', name: 'Android TV', icon: 'i-tv', label: 'Android TV', title: 'Подключение на Android TV', intro: 'Приложение можно установить на телевизор или ТВ-приставку с Android TV.', steps: [ { t: 'Установите приложение', d: 'Скачайте APK с happ.su / GitHub и установите через файловый менеджер или приложение «Send files to TV».' }, { t: 'Откройте эту страницу', d: 'Запустите браузер на телевизоре и перейдите на этот сайт. Либо отправьте себе ссылку на подписку.' }, { t: 'Нажмите «Подключиться»', d: 'Подтвердите открытие приложения пультом — подписка со всеми серверами добавится.' }, { t: 'Включите туннель', d: 'Нажмите питание в приложении и разрешите VPN-подключение.' } ], asideTitle: 'Приложение для Android TV', asideText: 'Интерфейс адаптирован под пульт. Требуется Android TV 9+.' }
+  ];
+
+  const state = { selected: 'de' };
+  try {
+    const saved = localStorage.getItem('nimblevpn_server');
+    if (saved && SERVERS.some(function (s) { return s.id === saved; })) state.selected = saved;
+  } catch (e) {}
+
+  const $ = function (sel, root) { return (root || document).querySelector(sel); };
+  const $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  function currentServer() {
+    return SERVERS.filter(function (s) { return s.id === state.selected; })[0] || SERVERS[0];
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const el = $('#toast');
+    el.innerHTML = '<span class="ok">✓</span>' + msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2600);
+  }
+
+  function copyText(text, silent) {
+    function fallback() {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(fallback);
+    } else {
+      fallback();
+    }
+    if (!silent) toast('Скопировано в буфер обмена');
+  }
+
+  // ==== РЕНДЕР СЕРВЕРОВ ====
+  const grid = $('#serverGrid');
+  grid.innerHTML = SERVERS.map(function (s) {
+    return '' +
+      '<div class="server" data-id="' + s.id + '" role="button" tabindex="0" aria-pressed="false" aria-label="Сервер ' + s.name + '">' +
+        '<div class="server-top">' +
+          '<span class="flag">' + s.flag + '</span>' +
+          '<span class="server-name">' + s.name + '</span>' +
+          '<span class="ping">' + s.ping + '</span>' +
+        '</div>' +
+        '<div class="server-meta">' + s.city + '<span class="sep">·</span><span class="proto">' + s.proto + '</span><span class="sep">·</span>VLESS</div>' +
+        '<div class="server-actions">' +
+          '<button class="server-connect" data-connect-id="' + s.id + '" type="button">' +
+            '<svg class="ico" style="width:15px;height:15px"><use href="#i-bolt"/></svg> Подключить' +
+          '</button>' +
+          '<button class="copy-btn" data-copy-id="' + s.id + '" type="button" aria-label="Скопировать ссылку">' +
+            '<svg class="ico" style="width:16px;height:16px"><use href="#i-copy"/></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+  }).join('');
+
+  function syncSelected() {
+    $$('.server').forEach(function (el) {
+      const on = el.getAttribute('data-id') === state.selected;
+      el.classList.toggle('active', on);
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  function select(id) {
+    state.selected = id;
+    try { localStorage.setItem('nimblevpn_server', id); } catch (e) {}
+    syncSelected();
+  }
+
+  // ==== МОДАЛКИ ====
+  const appModal = $('#appModal');
+  const errorModal = $('#errorModal');
+  let pendingSubUrl = null;
+
+  function closeModals() {
+    appModal.classList.remove('open');
+    appModal.setAttribute('aria-hidden', 'true');
+    errorModal.classList.remove('open');
+    errorModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  }
+
+  function showAppModal(subUrl) {
+    pendingSubUrl = subUrl;
+    appModal.classList.add('open');
+    appModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  }
+
+  // ==== ОТКРЫТИЕ ПРИЛОЖЕНИЯ ====
+  function launchApp(app) {
+    if (!pendingSubUrl) return;
+    const sub = pendingSubUrl;
+    copyText(sub, true); // копируем на случай, если не откроется
+
+    const url = app === 'happ' 
+      ? 'happ://add/' + sub 
+      : 'incy://add/' + sub;
+
+    let left = false;
+    function markLeft() { left = true; }
+    window.addEventListener('blur', markLeft, { once: true });
+    document.addEventListener('visibilitychange', function onVis() {
+      if (document.hidden) { left = true; }
+      document.removeEventListener('visibilitychange', onVis);
+    });
+
+    setTimeout(function() {
+      if (!left && !document.hidden) {
+        // Приложение не открылось — показываем ошибку
+        $('#downloadLink').href = app === 'happ' 
+          ? 'https://www.happ.su/' 
+          : 'https://github.com/INCY-DEV/incy-platforms';
+        errorModal.classList.add('open');
+        errorModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+      }
+    }, 2400);
+
+    try { window.location.href = url; } catch (e) {}
+    closeModals();
+  }
+
+  // ==== ОБРАБОТЧИКИ КЛИКОВ ====
+  document.addEventListener('click', function (e) {
+    // Копирование
+    const copyBtn = e.target.closest('[data-copy-id]');
+    if (copyBtn) {
+      e.stopPropagation();
+      const s = SERVERS.filter(function (x) { return x.id === copyBtn.getAttribute('data-copy-id'); })[0];
+      if (s) { 
+        copyText(s.sub); 
+        copyBtn.innerHTML = '<svg class="ico" style="width:16px;height:16px"><use href="#i-check"/></svg>'; 
+        setTimeout(function () { copyBtn.innerHTML = '<svg class="ico" style="width:16px;height:16px"><use href="#i-copy"/></svg>'; }, 1400); 
+      }
+      return;
+    }
+
+    // Кнопка на карточке сервера
+    const connectBtn = e.target.closest('[data-connect-id]');
+    if (connectBtn) {
+      e.stopPropagation();
+      const id = connectBtn.getAttribute('data-connect-id');
+      select(id);
+      const s = SERVERS.filter(function (x) { return x.id === id; })[0];
+      if (s) showAppModal(s.sub);
+      return;
+    }
+
+    // Клик по карточке сервера
+    const card = e.target.closest('.server');
+    if (card) { 
+      select(card.getAttribute('data-id')); 
+      return; 
+    }
+
+    // Кнопка "Подключиться" (все серверы)
+    if (e.target.closest('[data-connect]')) { 
+      showAppModal(SUBSCRIPTION_ALL); 
+      return; 
+    }
+
+    // Закрытие модалок
+    if (e.target.closest('[data-close]')) { 
+      closeModals(); 
+      return; 
+    }
+
+    // Выбор приложения в модалке
+    const appBtn = e.target.closest('[data-app]');
+    if (appBtn) {
+      launchApp(appBtn.getAttribute('data-app'));
+      return;
+    }
+  });
+
+  // ==== КЛАВИАТУРА ====
+  grid.addEventListener('keydown', function (e) {
+    const card = e.target.closest('.server');
+    if (!card) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      select(card.getAttribute('data-id'));
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeModals();
+  });
+
+  // ==== РУЧНЫЕ ССЫЛКИ ====
+  function allSubscriptionsText() {
+    return '# nimbleVPN — ссылки на подписки\n' +
+      'Все серверы: ' + SUBSCRIPTION_ALL + '\n' +
+      SERVERS.map(function (s) { return s.name + ': ' + s.sub; }).join('\n') + '\n';
+  }
+  $('#copyAll').addEventListener('click', function () { copyText(allSubscriptionsText()); });
+  $('#copySub').addEventListener('click', function () { copyText(SUBSCRIPTION_ALL); });
+  const subEl = $('#subUrl');
+  if (subEl) subEl.textContent = SUBSCRIPTION_ALL;
+  $('#downloadAll').addEventListener('click', function () {
+    const blob = new Blob([allSubscriptionsText()], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'nimblevpn-subscriptions.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast('Файл со ссылками скачан');
+  });
+
+  $('#cfgList').innerHTML = SERVERS.map(function (s) {
+    return '<div class="cfg">' +
+      '<span class="cfg-name">' + s.flag + ' ' + s.name + '</span>' +
+      '<code>' + s.sub.replace(/</g, '&lt;') + '</code>' +
+      '<button class="copy-btn" data-copy-id="' + s.id + '" type="button" aria-label="Скопировать ссылку">' +
+        '<svg class="ico" style="width:15px;height:15px"><use href="#i-copy"/></svg>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+
+  // ==== РЕНДЕР ПЛАТФОРМ ====
+  const tabsEl = $('#tabs');
+  const panelsEl = $('#panels');
+
+  tabsEl.innerHTML = PLATFORMS.map(function (p) {
+    return '<button class="tab" role="tab" id="tab-' + p.id + '" data-tab="' + p.id + '" aria-selected="false" aria-controls="panel-' + p.id + '">' +
+      '<svg aria-hidden="true"><use href="#' + p.icon + '"/></svg>' + p.name +
+    '</button>';
+  }).join('');
+
+  panelsEl.innerHTML = PLATFORMS.map(function (p) {
+    return '<div class="panel" id="panel-' + p.id + '" role="tabpanel" aria-labelledby="tab-' + p.id + '">' +
+      '<div class="plat-wrap">' +
+        '<div>' +
+          '<h3>' + p.title + '</h3>' +
+          '<p class="plat-intro">' + p.intro + '</p>' +
+          '<ol class="steps">' + p.steps.map(function (st, i) {
+            return '<li><span class="step-n">' + (i + 1) + '</span><div><b>' + st.t + '</b><p>' + st.d + '</p></div></li>';
+          }).join('') + '</ol>' +
+        '</div>' +
+        '<aside class="plat-aside">' +
+          '<div class="aside-icon"><svg aria-hidden="true"><use href="#' + p.icon + '"/></svg></div>' +
+          '<h4>' + p.asideTitle + '</h4>' +
+          '<p>' + p.asideText + '</p>' +
+          '<a class="btn btn-soft" href="https://www.happ.su/" target="_blank" rel="noopener">' +
+            '<svg class="ico" aria-hidden="true"><use href="#i-download"/></svg> Скачать Happ</a>' +
+          '<a class="btn btn-soft" href="https://github.com/INCY-DEV/incy-platforms" target="_blank" rel="noopener">' +
+            '<svg class="ico" aria-hidden="true"><use href="#i-download"/></svg> Скачать Incy</a>' +
+          '<button class="btn btn-primary" data-connect>' +
+            '<svg class="ico" aria-hidden="true"><use href="#i-bolt"/></svg> Подключиться</button>' +
+          '<p class="hint">Откроется выбор приложения</p>' +
+        '</aside>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  function setTab(id) {
+    $$('.tab').forEach(function (t) {
+      const on = t.getAttribute('data-tab') === id;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    $$('.panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'panel-' + id);
+    });
+  }
+
+  tabsEl.addEventListener('click', function (e) {
+    const tab = e.target.closest('.tab');
+    if (tab) setTab(tab.getAttribute('data-tab'));
+  });
+
+  function detectPlatform() {
+    const ua = navigator.userAgent.toLowerCase();
+    if (/android/.test(ua)) return /tv|bravia|aft[mb]|googletv/.test(ua) ? 'tv' : 'android';
+    if (/iphone|ipad|ipod/.test(ua) || (/macintosh/.test(ua) && 'ontouchend' in document)) return 'ios';
+    if (/mac os x|macintosh/.test(ua)) return 'macos';
+    if (/windows/.test(ua)) return 'windows';
+    if (/linux|x11/.test(ua)) return 'linux';
+    return 'windows';
+  }
+  setTab(detectPlatform());
+
+  // ==== HEADER / MOBILE MENU ====
+  const header = $('.site-header');
+  const nav = $('#nav');
+  const menuBtn = $('#menuBtn');
+
+  window.addEventListener('scroll', function () {
+    header.classList.toggle('scrolled', window.scrollY > 12);
+  }, { passive: true });
+
+  menuBtn.addEventListener('click', function () {
+    const open = nav.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  nav.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
+  });
+
+  // ==== REVEAL ====
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    $$('.reveal').forEach(function (el) { io.observe(el); });
+  } else {
+    $$('.reveal').forEach(function (el) { el.classList.add('in'); });
+  }
+
+  syncSelected();
+})();
+</script>
+</body>
+</html>
